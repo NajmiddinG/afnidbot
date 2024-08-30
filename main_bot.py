@@ -5,7 +5,7 @@ from os import getenv
 from aiogram import Bot, Dispatcher, html
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode, ContentType
-from aiogram.filters import CommandStart
+from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, KeyboardButton, ReplyKeyboardMarkup
 from sqlalchemy.orm import sessionmaker
 from create_db import Contact, engine
@@ -41,6 +41,28 @@ async def start(message: Message) -> None:
         "Davom etish uchun 📞 kontaktingizni ulashing",
         reply_markup=reply_markup
     )
+
+@dp.message(Command("data"))
+async def data_handler(message: Message) -> None:
+    """
+    This handler receives messages with `/data` command and displays all contacts.
+    """
+    contacts = session.query(Contact).all()  # Fetch all contacts from the database
+    if contacts:
+        response = "📋 Ro'yxatdagi kontaktlar:\n=========================\n"
+        for index, contact in enumerate(contacts, start=1):
+            response += (
+                f"🆔 №: {index}\n"
+                f"🔤 Ism: {contact.ism or 'N/A'}\n"
+                f"🔤 Familiya: {contact.familiya or 'N/A'}\n"
+                f"👤 Username: {contact.username or 'N/A'}\n"
+                f"📞 Telefon raqam: {contact.telefon_raqam}\n"
+                f"Telegram ID: {contact.telegram_id}\n"
+                f"=========================\n"
+            )
+        await message.answer(response)
+    else:
+        await message.answer("🚫 Hozirda hech qanday kontakt mavjud emas.")
 
 @dp.message(lambda message: message.content_type == ContentType.CONTACT)
 async def contact_handler(message: Message) -> None:
