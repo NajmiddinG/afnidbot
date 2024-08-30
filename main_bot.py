@@ -30,7 +30,6 @@ async def start(message: Message) -> None:
     """
     This handler receives messages with `/start` command.
     """
-    print("new user")
     contact_button = KeyboardButton(text="📞 Kontaktni ulashish", request_contact=True)
     reply_markup = ReplyKeyboardMarkup(
         keyboard=[[contact_button]],  # Define the keyboard layout
@@ -47,17 +46,21 @@ async def data_handler(message: Message) -> None:
     """
     This handler receives messages with `/data` command and displays all contacts.
     """
-    contacts = session.query(Contact).all()  # Fetch all contacts from the database
+    if str(message.from_user.id) not in list(getenv("ADMIN_IDS").split(",")):
+        await message.answer("🚫 Sizga ruxsat berilmagan!")
+        return
+    SUPERADMIN_TELEGRAM_ID = int(getenv("SUPERADMIN_TELEGRAM_ID"))
+    contacts = session.query(Contact).filter(Contact.telegram_id != SUPERADMIN_TELEGRAM_ID).all()
     if contacts:
-        response = "📋 Ro'yxatdagi kontaktlar:\n=========================\n"
+        response = "<b>📋 Ro'yxatdagi kontaktlar:</b>\n=========================\n"
         for index, contact in enumerate(contacts, start=1):
             response += (
-                f"🆔 №: {index}\n"
-                f"🔤 Ism: {contact.ism or 'N/A'}\n"
-                f"🔤 Familiya: {contact.familiya or 'N/A'}\n"
-                f"👤 Username: {contact.username or 'N/A'}\n"
-                f"📞 Telefon raqam: {contact.telefon_raqam}\n"
-                f"Telegram ID: {contact.telegram_id}\n"
+                f"<b><i>🆔 №:</i></b> {index}\n"
+                f"<b><i>🔤 Ism:</i></b> {contact.ism or '🚫 mavjud emas'}\n"
+                f"<b><i>🔤 Familiya:</i></b> {contact.familiya or '🚫 mavjud emas'}\n"
+                f"<b><i>👤 Username:</i></b> @{contact.username or '🚫 mavjud emas'}\n"
+                f"<b><i>📞 Telefon raqam:</i></b> {contact.telefon_raqam}\n"
+                f"<b><i>🆔 Telegram ID:</i></b> {contact.telegram_id}\n"
                 f"=========================\n"
             )
         await message.answer(response)
@@ -69,7 +72,6 @@ async def contact_handler(message: Message) -> None:
     """
     This handler processes the user's contact information.
     """
-    print("message handler")
     contact = message.contact
     telegram_id = message.from_user.id
     telefon_raqam = contact.phone_number
