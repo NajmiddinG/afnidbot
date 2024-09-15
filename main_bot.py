@@ -14,7 +14,7 @@ from create_db import Contact, engine
 from dotenv import load_dotenv
 
 # Load environment variables
-load_dotenv()
+load_dotenv(override=True)
 
 # Get the bot token from the environment
 TOKEN = getenv('BOT_TOKEN')
